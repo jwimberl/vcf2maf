@@ -196,6 +196,7 @@ my ( $man, $help, $verbose ) = ( 0, 0, 0 );
 my ( $input_vcf, $output_maf, $tmp_dir, $custom_enst_file );
 my ( $vcf_tumor_id, $vcf_normal_id, $remap_chain );
 my ( $samtools, $tabix, $liftover ) ;
+my ( $strip_chr_for_fasta, $add_chr_for_fasta ) = ( 0, 0 );
 GetOptions(
     'help!' => \$help,
     'man!' => \$man,
@@ -232,6 +233,8 @@ GetOptions(
     'samtools-exec=s' => \$samtools,
     'tabix-exec=s' => \$tabix,
     'liftover-exec=s' => \$liftover,
+    'strip-chr-for-fasta!' => \$strip_chr_for_fasta,
+    'add-chr-for-fasta!' => \$add_chr_for_fasta,
 
 ) or pod2usage( -verbose => 1, -input => \*DATA, -exitval => 2 );
 
@@ -396,6 +399,13 @@ while( my $line = $vcf_fh->getline ) {
     next if( $line =~ m/^#/ );
     chomp( $line );
     my ( $chr, $pos, undef, $ref ) = split( "\t", $line );
+    if ($strip_chr_for_fasta) {
+    	$chr =~ s/chrX/X/; # rename chrX to X
+        $chr =~ s/chrY/Y/; # rename chrY to Y
+        $chr =~ s/chr([1-9][0-9]*)/$1/; # rename chr1, chr2, ... to 1, 2, ...
+    } elsif ($add_chr_for_fasta) {
+        $chr = "chr${chr}";
+    }
     # Create a region that spans the length of the reference allele and 1bp flanks around it
     my $region = "$chr:" . ( $pos - 1 ) . "-" . ( $pos + length( $ref ));
     $ref_bps{$region} = $ref;
