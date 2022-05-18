@@ -906,7 +906,15 @@ while( my $line = $annotated_vcf_fh->getline ) {
     $maf_line{FILTER} = $filter;
 
     # Also add the reference allele flanking bps that we generated earlier with samtools
-    my $region = "$chrom:" . ( $vcf_pos - 1 ) . "-" . ( $vcf_pos + length( $vcf_ref ));
+    my $st_chrom = $chrom;
+    if ($strip_chr_for_fasta) {
+    	$st_chrom =~ s/chrX/X/; # rename chrX to X
+        $st_chrom =~ s/chrY/Y/; # rename chrY to Y
+        $st_chrom =~ s/chr([1-9][0-9]*)/$1/; # rename chr1, chr2, ... to 1, 2, ...
+    } elsif ($add_chr_for_fasta) {
+        $st_chrom = "chr${st_chrom}";
+    }
+    my $region = "$st_chrom:" . ( $vcf_pos - 1 ) . "-" . ( $vcf_pos + length( $vcf_ref ));
     $maf_line{flanking_bps} = $flanking_bps{$region};
 
     # Add ID and QUAL from the input VCF into respective MAF columns
